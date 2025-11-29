@@ -2,41 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>2026 USA Calendar</title>
+  <title>Calendar (BD & USA)</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; background: #fff; color: #000; }
-    h1 { margin-bottom: 20px; }
-    select, button, input { padding: 5px; margin: 10px; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      color: #000;
+    }
+
+    /* আকাশ ও ক্রিকেট গ্রাউন্ড */
+    .sky {
+      height: 40vh;
+      background: url('sky-with-birds.jpg') no-repeat center center;
+      background-size: cover;
+      color: #fff;
+    }
+    .ground {
+      height: 30vh;
+      background: url('cricket-ground.jpg') no-repeat center center;
+      background-size: cover;
+      color: #fff;
+    }
+    .overlay {
+      background: rgba(0,0,0,0.4);
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    h1 { margin: 20px; }
+
+    /* ক্যালেন্ডার */
+    .container { display: flex; justify-content: space-around; flex-wrap: wrap; }
+    .calendar-container { width: 45%; }
     .calendar { 
       display: grid; 
       grid-template-columns: repeat(7, 1fr); 
       gap: 5px; 
-      max-width: 800px; 
       margin: auto; 
     }
-    .day { border: 1px solid #ccc; padding: 10px; min-height: 60px; cursor: pointer; }
+    .day { border: 1px solid #ccc; padding: 10px; min-height: 60px; }
     .header { font-weight: bold; background: #f0f0f0; }
     .holiday { background-color: #ffeb3b; }
     .weekend { background-color: #e0e0e0; }
-    .event { background-color: #c8e6c9; }
+
+    @media (max-width: 800px) {
+      .calendar-container { width: 100%; margin-bottom: 20px; }
+    }
   </style>
 </head>
 <body>
-  <h1>2026 USA Calendar</h1>
+  <!-- আকাশ -->
+  <div class="sky">
+    <div class="overlay">
+      <h1>আকাশে পাখি উড়ছে...</h1>
+    </div>
+  </div>
 
-  <!-- মাস সিলেক্টর -->
-  <label for="month">Choose Month:</label>
-  <select id="month"></select>
+  <!-- ক্যালেন্ডার সেকশন -->
+  <h1>Bangladesh & USA Calendar (1996–2050)</h1>
+  <label for="year">Choose Year:</label>
+  <select id="year"></select>
 
-  <!-- ক্যালেন্ডার -->
-  <div id="calendar" class="calendar"></div>
+  <div class="container">
+    <div class="calendar-container">
+      <h2>Bangladesh Calendar</h2>
+      <label for="monthBD">Choose Month:</label>
+      <select id="monthBD"></select>
+      <div id="calendarBD" class="calendar"></div>
+    </div>
 
-  <!-- Date Range Calculator -->
-  <h2>Business Day Calculator</h2>
+    <div class="calendar-container">
+      <h2>USA Calendar</h2>
+      <label for="monthUSA">Choose Month:</label>
+      <select id="monthUSA"></select>
+      <div id="calendarUSA" class="calendar"></div>
+    </div>
+  </div>
+
+  <!-- Calculator Section -->
+  <h2>Business Day Calculator (USA)</h2>
   <label>Start Date: <input type="date" id="startDate"></label>
   <label>End Date: <input type="date" id="endDate"></label>
   <button onclick="calculateDays()">Calculate</button>
   <div id="result"></div>
+
+  <!-- ক্রিকেট গ্রাউন্ড -->
+  <div class="ground">
+    <div class="overlay">
+      <h1>নিচে ক্রিকেট গ্রাউন্ড</h1>
+    </div>
+  </div>
 
   <script>
     const daysOfWeek = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
@@ -45,79 +103,61 @@
       "July","August","September","October","November","December"
     ];
 
-    // 🇺🇸 US Federal Holidays 2026 (month index: day)
-    const usaHolidays = {
-      0: [1, 19],       // Jan 1 (New Year), Jan 19 (MLK Day)
-      1: [16],          // Feb 16 (Presidents' Day)
-      4: [25],          // May 25 (Memorial Day)
-      6: [4],           // July 4 (Independence Day)
-      8: [7],           // Sep 7 (Labor Day)
-      9: [12],          // Oct 12 (Columbus Day)
-      10: [11, 26],     // Nov 11 (Veterans Day), Nov 26 (Thanksgiving)
-      11: [25]          // Dec 25 (Christmas)
-    };
+    const bdHolidays = {1:[21],2:[26],4:[1],11:[16]};
+    const usaHolidays = {0:[1,19],1:[16],4:[25],6:[4],8:[7],9:[12],10:[11,26],11:[25]};
 
-    const monthSelect = document.getElementById("month");
-    const calendar = document.getElementById("calendar");
+    function renderYearOptions() {
+      const yearSelect = document.getElementById("year");
+      for (let y = 1996; y <= 2050; y++) {
+        const opt = document.createElement("option");
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      }
+      yearSelect.value = 2026;
+    }
 
-    function renderMonthOptions() {
+    function renderMonthOptions(selectId) {
+      const select = document.getElementById(selectId);
       monthNames.forEach((m, i) => {
         const opt = document.createElement("option");
         opt.value = i;
         opt.textContent = m;
-        monthSelect.appendChild(opt);
+        select.appendChild(opt);
       });
     }
 
-    function isHoliday(month, day) {
-      return usaHolidays[month]?.includes(day);
+    function isHoliday(list, month, day) {
+      return list[month]?.includes(day);
     }
 
-    function generateCalendar(year, month) {
+    function generateCalendar(year, month, calendarId, holidayList) {
+      const calendar = document.getElementById(calendarId);
       calendar.innerHTML = "";
-
-      // সপ্তাহের নাম দেখানো
       daysOfWeek.forEach(d => {
         const h = document.createElement("div");
         h.className = "day header";
         h.textContent = d;
         calendar.appendChild(h);
       });
-
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month+1, 0).getDate();
-
-      // ফাঁকা জায়গা
       for (let i = 0; i < firstDay; i++) {
         const empty = document.createElement("div");
         empty.className = "day";
         calendar.appendChild(empty);
       }
-
-      // দিনগুলো দেখানো
       for (let day = 1; day <= daysInMonth; day++) {
         const div = document.createElement("div");
         div.className = "day";
         div.innerText = day;
-
-        const dateObj = new Date(year, month, day);
-        const weekday = dateObj.getDay();
-
-        // Weekend highlight
-        if (weekday === 0 || weekday === 6) {
-          div.classList.add("weekend");
-        }
-
-        // Holiday highlight
-        if (isHoliday(month, day)) {
-          div.classList.add("holiday");
-        }
-
+        const weekday = new Date(year, month, day).getDay();
+        if (weekday === 0 || weekday === 6) div.classList.add("weekend");
+        if (isHoliday(holidayList, month, day)) div.classList.add("holiday");
         calendar.appendChild(div);
       }
     }
 
-    // Business Day Calculator
     function calculateDays() {
       const start = new Date(document.getElementById("startDate").value);
       const end = new Date(document.getElementById("endDate").value);
@@ -125,34 +165,35 @@
         document.getElementById("result").innerText = "Invalid date range!";
         return;
       }
-
-      let totalDays = 0;
-      let businessDays = 0;
-
+      let totalDays = 0, businessDays = 0;
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         totalDays++;
-        const month = d.getMonth();
-        const day = d.getDate();
-        const weekday = d.getDay();
-
-        const holiday = isHoliday(month, day);
+        const month = d.getMonth(), day = d.getDate(), weekday = d.getDay();
+        const holiday = isHoliday(usaHolidays, month, day);
         const weekend = (weekday === 0 || weekday === 6);
-
-        if (!holiday && !weekend) {
-          businessDays++;
-        }
+        if (!holiday && !weekend) businessDays++;
       }
-
       document.getElementById("result").innerText =
-        `Total Calendar Days: ${totalDays}\nBusiness Days: ${businessDays}`;
+        `Total Calendar Days: ${totalDays}\nBusiness Days (USA): ${businessDays}`;
     }
 
-    renderMonthOptions();
-    monthSelect.addEventListener("change", () => generateCalendar(2026, Number(monthSelect.value)));
-
-    // ডিফল্ট জানুয়ারি দেখাবে
-    monthSelect.value = "0";
-    generateCalendar(2026, 0);
+    renderYearOptions();
+    renderMonthOptions("monthBD");
+    renderMonthOptions("monthUSA");
+    document.getElementById("monthBD").addEventListener("change", e => {
+      generateCalendar(Number(document.getElementById("year").value), Number(e.target.value), "calendarBD", bdHolidays);
+    });
+    document.getElementById("monthUSA").addEventListener("change", e => {
+      generateCalendar(Number(document.getElementById("year").value), Number(e.target.value), "calendarUSA", usaHolidays);
+    });
+    document.getElementById("year").addEventListener("change", () => {
+      generateCalendar(Number(document.getElementById("year").value), Number(document.getElementById("monthBD").value), "calendarBD", bdHolidays);
+      generateCalendar(Number(document.getElementById("year").value), Number(document.getElementById("monthUSA").value), "calendarUSA", usaHolidays);
+    });
+    document.getElementById("monthBD").value = "0";
+    document.getElementById("monthUSA").value = "0";
+    generateCalendar(2026, 0, "calendarBD", bdHolidays);
+    generateCalendar(2026, 0, "calendarUSA", usaHolidays);
   </script>
 </body>
 </html>
