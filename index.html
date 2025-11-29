@@ -2,65 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>2026 Calendar</title>
+  <title>2026 USA Calendar</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; }
+    body { font-family: Arial, sans-serif; text-align: center; background: #fff; color: #000; }
     h1 { margin-bottom: 20px; }
-    select { padding: 5px; margin-bottom: 20px; }
+    select, button, input { padding: 5px; margin: 10px; }
     .calendar { 
       display: grid; 
       grid-template-columns: repeat(7, 1fr); 
       gap: 5px; 
-      max-width: 600px; 
+      max-width: 800px; 
       margin: auto; 
     }
-    .day { border: 1px solid #ccc; padding: 10px; }
+    .day { border: 1px solid #ccc; padding: 10px; min-height: 60px; cursor: pointer; }
     .header { font-weight: bold; background: #f0f0f0; }
     .holiday { background-color: #ffeb3b; }
+    .weekend { background-color: #e0e0e0; }
+    .event { background-color: #c8e6c9; }
   </style>
 </head>
 <body>
-  <h1>2026 Calendar</h1>
+  <h1>2026 USA Calendar</h1>
 
   <!-- মাস সিলেক্টর -->
   <label for="month">Choose Month:</label>
-  <select id="month" onchange="generateCalendar(2026, this.value)">
-    <option value="0">January</option>
-    <option value="1">February</option>
-    <option value="2">March</option>
-    <option value="3">April</option>
-    <option value="4">May</option>
-    <option value="5">June</option>
-    <option value="6">July</option>
-    <option value="7">August</option>
-    <option value="8">September</option>
-    <option value="9">October</option>
-    <option value="10">November</option>
-    <option value="11">December</option>
-  </select>
+  <select id="month"></select>
 
   <!-- ক্যালেন্ডার -->
   <div id="calendar" class="calendar"></div>
 
+  <!-- Date Range Calculator -->
+  <h2>Business Day Calculator</h2>
+  <label>Start Date: <input type="date" id="startDate"></label>
+  <label>End Date: <input type="date" id="endDate"></label>
+  <button onclick="calculateDays()">Calculate</button>
+  <div id="result"></div>
+
   <script>
     const daysOfWeek = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    const monthNames = [
+      "January","February","March","April","May","June",
+      "July","August","September","October","November","December"
+    ];
+
+    // 🇺🇸 US Federal Holidays 2026 (month index: day)
+    const usaHolidays = {
+      0: [1, 19],       // Jan 1 (New Year), Jan 19 (MLK Day)
+      1: [16],          // Feb 16 (Presidents' Day)
+      4: [25],          // May 25 (Memorial Day)
+      6: [4],           // July 4 (Independence Day)
+      8: [7],           // Sep 7 (Labor Day)
+      9: [12],          // Oct 12 (Columbus Day)
+      10: [11, 26],     // Nov 11 (Veterans Day), Nov 26 (Thanksgiving)
+      11: [25]          // Dec 25 (Christmas)
+    };
+
+    const monthSelect = document.getElementById("month");
+    const calendar = document.getElementById("calendar");
+
+    function renderMonthOptions() {
+      monthNames.forEach((m, i) => {
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.textContent = m;
+        monthSelect.appendChild(opt);
+      });
+    }
+
+    function isHoliday(month, day) {
+      return usaHolidays[month]?.includes(day);
+    }
 
     function generateCalendar(year, month) {
-      const calendar = document.getElementById("calendar");
       calendar.innerHTML = "";
 
       // সপ্তাহের নাম দেখানো
-      for (let i = 0; i < 7; i++) {
-        const header = document.createElement("div");
-        header.className = "day header";
-        header.innerText = daysOfWeek[i];
-        calendar.appendChild(header);
-      }
+      daysOfWeek.forEach(d => {
+        const h = document.createElement("div");
+        h.className = "day header";
+        h.textContent = d;
+        calendar.appendChild(h);
+      });
 
       const firstDay = new Date(year, month, 1).getDay();
       const daysInMonth = new Date(year, month+1, 0).getDate();
 
-      // ফাঁকা জায়গা (মাসের শুরুর আগে)
+      // ফাঁকা জায়গা
       for (let i = 0; i < firstDay; i++) {
         const empty = document.createElement("div");
         empty.className = "day";
@@ -73,8 +100,16 @@
         div.className = "day";
         div.innerText = day;
 
-        // উদাহরণ: ১ জানুয়ারি ছুটি হিসেবে মার্ক করা
-        if (month == 0 && day == 1) {
+        const dateObj = new Date(year, month, day);
+        const weekday = dateObj.getDay();
+
+        // Weekend highlight
+        if (weekday === 0 || weekday === 6) {
+          div.classList.add("weekend");
+        }
+
+        // Holiday highlight
+        if (isHoliday(month, day)) {
           div.classList.add("holiday");
         }
 
@@ -82,7 +117,41 @@
       }
     }
 
-    // ডিফল্ট: জানুয়ারি ২০২৬ দেখাবে
+    // Business Day Calculator
+    function calculateDays() {
+      const start = new Date(document.getElementById("startDate").value);
+      const end = new Date(document.getElementById("endDate").value);
+      if (!start || !end || start > end) {
+        document.getElementById("result").innerText = "Invalid date range!";
+        return;
+      }
+
+      let totalDays = 0;
+      let businessDays = 0;
+
+      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        totalDays++;
+        const month = d.getMonth();
+        const day = d.getDate();
+        const weekday = d.getDay();
+
+        const holiday = isHoliday(month, day);
+        const weekend = (weekday === 0 || weekday === 6);
+
+        if (!holiday && !weekend) {
+          businessDays++;
+        }
+      }
+
+      document.getElementById("result").innerText =
+        `Total Calendar Days: ${totalDays}\nBusiness Days: ${businessDays}`;
+    }
+
+    renderMonthOptions();
+    monthSelect.addEventListener("change", () => generateCalendar(2026, Number(monthSelect.value)));
+
+    // ডিফল্ট জানুয়ারি দেখাবে
+    monthSelect.value = "0";
     generateCalendar(2026, 0);
   </script>
 </body>
