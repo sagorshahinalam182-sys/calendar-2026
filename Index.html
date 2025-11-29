@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>2026 Calendar</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; }
+    h1 { margin-bottom: 20px; }
+    select { padding: 5px; margin-bottom: 20px; }
+    .calendar { 
+      display: grid; 
+      grid-template-columns: repeat(7, 1fr); 
+      gap: 5px; 
+      max-width: 600px; 
+      margin: auto; 
+    }
+    .day { border: 1px solid #ccc; padding: 10px; }
+    .header { font-weight: bold; background: #f0f0f0; }
+    .holiday { background-color: #ffeb3b; }
+  </style>
+</head>
+<body>
+  <h1>2026 Calendar</h1>
+
+  <!-- মাস সিলেক্টর -->
+  <label for="month">Choose Month:</label>
+  <select id="month" onchange="generateCalendar(2026, this.value)">
+    <option value="0">January</option>
+    <option value="1">February</option>
+    <option value="2">March</option>
+    <option value="3">April</option>
+    <option value="4">May</option>
+    <option value="5">June</option>
+    <option value="6">July</option>
+    <option value="7">August</option>
+    <option value="8">September</option>
+    <option value="9">October</option>
+    <option value="10">November</option>
+    <option value="11">December</option>
+  </select>
+
+  <!-- ক্যালেন্ডার -->
+  <div id="calendar" class="calendar"></div>
+
+  <script>
+    const daysOfWeek = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+    function generateCalendar(year, month) {
+      const calendar = document.getElementById("calendar");
+      calendar.innerHTML = "";
+
+      // সপ্তাহের নাম দেখানো
+      for (let i = 0; i < 7; i++) {
+        const header = document.createElement("div");
+        header.className = "day header";
+        header.innerText = daysOfWeek[i];
+        calendar.appendChild(header);
+      }
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month+1, 0).getDate();
+
+      // ফাঁকা জায়গা (মাসের শুরুর আগে)
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement("div");
+        empty.className = "day";
+        calendar.appendChild(empty);
+      }
+
+      // দিনগুলো দেখানো
+      for (let day = 1; day <= daysInMonth; day++) {
+        const div = document.createElement("div");
+        div.className = "day";
+        div.innerText = day;
+
+        // উদাহরণ: ১ জানুয়ারি ছুটি হিসেবে মার্ক করা
+        if (month == 0 && day == 1) {
+          div.classList.add("holiday");
+        }
+
+        calendar.appendChild(div);
+      }
+    }
+
+    // ডিফল্ট: জানুয়ারি ২০২৬ দেখাবে
+    generateCalendar(2026, 0);
+  </script>
+</body>
+</html>
