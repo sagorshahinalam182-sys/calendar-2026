@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>Calendar (BD & USA)</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; text-align: center; margin:0; padding:0; }
     h1 { margin: 20px 0 10px; font-size: 20px; }
     h2 { font-size: 16px; margin: 10px 0; }
     select, button, input { padding: 5px; margin: 5px; font-size: 14px; }
@@ -23,19 +23,9 @@
       min-height: 50px;
       font-size: 11px;
     }
-    .header {
-      font-weight: bold;
-      background: #f0f0f0;
-      font-size: 11px;
-    }
-    .holiday, .weekend {
-      background-color: #ffcccc;
-      color: #000;
-    }
-    .holiday-name {
-      font-size: 9px;
-      color: #900;
-    }
+    .header { font-weight: bold; background: #f0f0f0; font-size: 11px; }
+    .holiday, .weekend { background-color: #ffcccc; color: #000; }
+    .holiday-name { font-size: 9px; color: #900; }
     @media (max-width: 800px) {
       .calendar-container { width: 100%; margin-bottom: 15px; }
     }
@@ -65,139 +55,129 @@
 
   <h2>Business Day Calculator</h2>
   <h3>Bangladesh</h3>
-  <label>Start: <input type="date" id="startDateBD" /></label>
-  <label>End: <input type="date" id="endDateBD" /></label>
+  <label>Start: <input type="date" id="startDateBD"></label>
+  <label>End: <input type="date" id="endDateBD"></label>
   <button onclick="calculateDays('BD')">Calculate BD</button>
   <div id="resultBD"></div>
 
   <h3>USA</h3>
-  <label>Start: <input type="date" id="startDateUSA" /></label>
-  <label>End: <input type="date" id="endDateUSA" /></label>
+  <label>Start: <input type="date" id="startDateUSA"></label>
+  <label>End: <input type="date" id="endDateUSA"></label>
   <button onclick="calculateDays('USA')">Calculate USA</button>
   <div id="resultUSA"></div>
 
-  <script>
-    const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
+<script>
+const daysOfWeek = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const monthNames = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-    const bdHolidays = {
-      "2-21": "Ekushey February",
-      "3-26": "Independence Day",
-      "5-1": "Labour Day",
-      "12-16": "Victory Day"
-    };
+const bdHolidays = {
+  "2-21":"Ekushey February",
+  "3-26":"Independence Day",
+  "5-1":"Labour Day",
+  "12-16":"Victory Day"
+};
+const usaHolidays = {
+  "1-1":"New Year",
+  "1-19":"MLK Day",
+  "2-16":"Presidents' Day",
+  "5-25":"Memorial Day",
+  "7-4":"Independence Day",
+  "9-7":"Labor Day",
+  "10-12":"Columbus Day",
+  "11-11":"Veterans Day",
+  "11-26":"Thanksgiving",
+  "12-25":"Christmas"
+};
 
-    const usaHolidays = {
-      "1-1": "New Year",
-      "1-19": "MLK Day",
-      "2-16": "Presidents' Day",
-      "5-25": "Memorial Day",
-      "7-4": "Independence Day",
-      "9-7": "Labor Day",
-      "10-12": "Columbus Day",
-      "11-11": "Veterans Day",
-      "11-26": "Thanksgiving",
-      "12-25": "Christmas"
-    };
-
-    function renderYearOptions() {
-      const yearSelect = document.getElementById("year");
-      for (let y = 1996; y <= 2050; y++) {
-        const opt = document.createElement("option");
-        opt.value = y;
-        opt.textContent = y;
-        yearSelect.appendChild(opt);
-      }
-      yearSelect.value = 2026;
+function renderYearOptions(){
+  const yearSelect=document.getElementById("year");
+  for(let y=1996;y<=2050;y++){
+    const opt=document.createElement("option");
+    opt.value=y; opt.textContent=y;
+    yearSelect.appendChild(opt);
+  }
+  yearSelect.value=2026;
+}
+function renderMonthOptions(selectId){
+  const select=document.getElementById(selectId);
+  monthNames.forEach((m,i)=>{
+    const opt=document.createElement("option");
+    opt.value=i; opt.textContent=m;
+    select.appendChild(opt);
+  });
+}
+function generateCalendar(year,month,calendarId,holidayList,weekendType){
+  const calendar=document.getElementById(calendarId);
+  calendar.innerHTML="";
+  daysOfWeek.forEach(d=>{
+    const h=document.createElement("div");
+    h.className="day header"; h.textContent=d;
+    calendar.appendChild(h);
+  });
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  for(let i=0;i<firstDay;i++){
+    const empty=document.createElement("div");
+    empty.className="day"; calendar.appendChild(empty);
+  }
+  for(let day=1;day<=daysInMonth;day++){
+    const div=document.createElement("div");
+    div.className="day";
+    const dateObj=new Date(year,month,day);
+    const weekday=dateObj.getDay();
+    div.innerHTML=`${day}<br><small>${daysOfWeek[weekday]}</small>`;
+    if((weekendType==="BD"&&(weekday===5||weekday===6))||(weekendType==="USA"&&(weekday===0||weekday===6))){
+      div.classList.add("weekend");
     }
-
-    function renderMonthOptions(selectId) {
-      const select = document.getElementById(selectId);
-      monthNames.forEach((m, i) => {
-        const opt = document.createElement("option");
-        opt.value = i;
-        opt.textContent = m;
-        select.appendChild(opt);
-      });
+    const key=`${month+1}-${day}`;
+    if(holidayList[key]){
+      div.classList.add("holiday");
+      div.innerHTML+=`<div class="holiday-name">${holidayList[key]}</div>`;
     }
+    calendar.appendChild(div);
+  }
+}
+function calculateDays(type){
+  const start=new Date(document.getElementById(type==="BD"?"startDateBD":"startDateUSA").value);
+  const end=new Date(document.getElementById(type==="BD"?"endDateBD":"endDateUSA").value);
+  if(!start||!end||start>end){
+    document.getElementById(type==="BD"?"resultBD":"resultUSA").innerText="Invalid date range!";
+    return;
+  }
+  let totalDays=0,businessDays=0;
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    totalDays++;
+    const month=d.getMonth()+1,day=d.getDate(),weekday=d.getDay();
+    const key=`${month}-${day}`;
+    const holiday=type==="BD"?bdHolidays[key]:usaHolidays[key];
+    const weekend=(type==="BD"?(weekday===5||weekday===6):(weekday===0||weekday===6));
+    if(!holiday&&!weekend)businessDays++;
+  }
+  document.getElementById(type==="BD"?"resultBD":"resultUSA").innerText=`Total Calendar Days: ${totalDays}\nBusiness Days (${type}): ${businessDays}`;
+}
 
-    function generateCalendar(year, month, calendarId, holidayList, weekendType) {
-      const calendar = document.getElementById(calendarId);
-      calendar.innerHTML = "";
+window.onload=function(){
+  renderYearOptions();
+  renderMonthOptions("monthBD");
+  renderMonthOptions("monthUSA");
+  document.getElementById("monthBD").value="0";
+  document.getElementById("monthUSA").value="0";
+  const year=Number(document.getElementById("year").value);
+  generateCalendar(year,0,"calendarBD",bdHolidays,"BD");
+  generateCalendar(year,0,"calendarUSA",usaHolidays,"USA");
 
-      daysOfWeek.forEach(d => {
-        const h = document.createElement("div");
-        h.className = "day header";
-        h.textContent = d;
-        calendar.appendChild(h);
-      });
-
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-      for (let i = 0; i < firstDay; i++) {
-        const empty = document.createElement("div");
-        empty.className = "day";
-        calendar.appendChild(empty);
-      }
-
-      for (let day = 1; day <= daysInMonth; day++) {
-        const div = document.createElement("div");
-        div.className = "day";
-        const dateObj = new Date(year, month, day);
-        const weekday = dateObj.getDay();
-        div.innerHTML = `${day}<br><small>${daysOfWeek[weekday]}</small>`;
-
-        if ((weekendType === "BD" && (weekday === 5 || weekday === 6)) ||
-            (weekendType === "USA" && (weekday === 0 || weekday === 6))) {
-          div.classList.add("weekend");
-        }
-
-        const key = `${month + 1}-${day}`;
-        if (holidayList[key]) {
-          div.classList.add("holiday");
-          div.innerHTML += `<div class="holiday-name">${holidayList[key]}</div>`;
-        }
-
-        calendar.appendChild(div);
-      }
-    }
-
-    function calculateDays(type) {
-      const start = new Date(document.getElementById(type === "BD" ? "startDateBD" : "startDateUSA").value);
-      const end = new Date(document.getElementById(type === "BD" ? "endDateBD" : "endDateUSA").value);
-      if (!start || !end || start > end) {
-        document.getElementById(type === "BD" ? "resultBD" : "resultUSA").innerText = "Invalid date range!";
-        return;
-      }
-
-      let totalDays = 0, businessDays = 0;
-      for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        totalDays++;
-        const month = d.getMonth() + 1, day = d.getDate(), weekday = d.getDay();
-        const key = `${month}-${day}`;
-        const holiday = type === "BD" ? bdHolidays[key] : usaHolidays[key];
-        const weekend = (type === "BD" ? (weekday === 5 || weekday === 6) : (weekday === 0 || weekday === 6));
-        if (!holiday && !weekend) businessDays++;
-      }
-      document.getElementById(type === "BD" ? "resultBD" : "resultUSA").innerText =
-        `Total Calendar Days: ${totalDays}\nBusiness Days (${type}): ${businessDays}`;
-    }
-
-    window.onload = function () {
-      renderYearOptions();
-      renderMonthOptions("monthBD");
-      renderMonthOptions("monthUSA");
-
-      document.getElementById("monthBD").value = "0";
-      document.getElementById("monthUSA").value = "0";
-
-      const year = Number(document.getElementById("year").value);
-      generateCalendar(year, 0, "calendarBD", bdHolidays, "BD");
-      generateCalendar(year, 0, "calendarUSA", usaHolidays, "USA");
-
-      document.getElementById("monthBD").addEventListener("change", e => {
-        const year = Number(document.getElementById("
+  document.getElementById("monthBD").addEventListener("change",e=>{
+    const year=Number(document.getElementById("year").value);
+    generateCalendar(year,Number(e.target.value),"calendarBD",bdHolidays,"BD");
+  });
+  document.getElementById("monthUSA").addEventListener("change",e=>{
+    const year=Number(document.getElementById("year").value);
+    generateCalendar(year,Number(e.target.value),"calendarUSA",usaHolidays,"USA");
+  });
+  document.getElementById("year").addEventListener("change",()=>{
+    const newYear=Number(document.getElementById("year").value);
+    const monthBD=Number(document.getElementById("monthBD").value);
+    const monthUSA=Number(document.getElementById("monthUSA").value);
+    generateCalendar(newYear,monthBD,"calendarBD",bdHolidays,"BD");
+    generateCalendar(newYear,monthUSA,"calendarUSA",usaHolidays,"USA");
+  });
